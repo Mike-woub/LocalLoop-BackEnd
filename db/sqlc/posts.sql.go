@@ -14,25 +14,25 @@ import (
 
 const createPost = `-- name: CreatePost :one
 INSERT INTO posts (
-  user_id, category, title, content, image_url, expires_at
+  user_id, category_id, title, content, image_url, expires_at
 ) VALUES (
   $1, $2, $3, $4, $5, $6
-) RETURNING id, user_id, category, title, content, image_url, created_at, expires_at
+) RETURNING id, user_id, category_id, title, content, image_url, created_at, expires_at
 `
 
 type CreatePostParams struct {
-	UserID    int32        `json:"user_id"`
-	Category  string       `json:"category"`
-	Title     string       `json:"title"`
-	Content   string       `json:"content"`
-	ImageUrl  []string     `json:"image_url"`
-	ExpiresAt sql.NullTime `json:"expires_at"`
+	UserID     int32        `json:"user_id"`
+	CategoryID int32        `json:"category_id"`
+	Title      string       `json:"title"`
+	Content    string       `json:"content"`
+	ImageUrl   []string     `json:"image_url"`
+	ExpiresAt  sql.NullTime `json:"expires_at"`
 }
 
 func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, error) {
 	row := q.db.QueryRowContext(ctx, createPost,
 		arg.UserID,
-		arg.Category,
+		arg.CategoryID,
 		arg.Title,
 		arg.Content,
 		pq.Array(arg.ImageUrl),
@@ -42,7 +42,7 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.Category,
+		&i.CategoryID,
 		&i.Title,
 		&i.Content,
 		pq.Array(&i.ImageUrl),

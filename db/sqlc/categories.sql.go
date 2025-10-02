@@ -10,22 +10,22 @@ import (
 )
 
 const getCategories = `-- name: GetCategories :many
-SELECT name FROM categories ORDER BY name
+SELECT id, name FROM categories ORDER BY name
 `
 
-func (q *Queries) GetCategories(ctx context.Context) ([]string, error) {
+func (q *Queries) GetCategories(ctx context.Context) ([]Category, error) {
 	rows, err := q.db.QueryContext(ctx, getCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []Category
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var i Category
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
-		items = append(items, name)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

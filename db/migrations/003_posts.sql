@@ -1,8 +1,28 @@
 -- +goose Up
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+);
+
+-- Seed default categories
+INSERT INTO categories (name) VALUES
+('General'),
+('Lost & Found'),
+('Events'),
+('Jobs'),
+('For Sale'),
+('Services'),
+('Recommendations'),
+('Questions'),
+('News & Alerts'),
+('Rants & Raves'),
+('Housing'),
+('Transportation');
+
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id),
-  category TEXT NOT NULL CHECK (category IN ('lost_found','for_sale','event','general')),
+  category_id INT NOT NULL REFERENCES categories(id),
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   image_url TEXT[] DEFAULT '{}',
@@ -11,5 +31,5 @@ CREATE TABLE posts (
 );
 
 -- +goose Down
-
-Drop TABLE posts;
+DROP TABLE posts;
+DROP TABLE categories;

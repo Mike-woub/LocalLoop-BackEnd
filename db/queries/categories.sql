@@ -1,3 +1,3 @@
 -- name: GetCategories :many
-SELECT name FROM categories ORDER BY name;
+SELECT id, name FROM categories ORDER BY name;
 

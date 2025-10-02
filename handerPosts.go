@@ -17,11 +17,11 @@ func (apiCfg *apiConfig) handlerCreatePost(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	type postParams struct {
-		Category  string     `json:"category"`
-		Title     string     `json:"title"`
-		Content   string     `json:"content"`
-		ImageUrl  []string   `json:"image_url"`
-		ExpiresAt *time.Time `json:"expires_at,omitempty"`
+		CategoryID int        `json:"category_id"`
+		Title      string     `json:"title"`
+		Content    string     `json:"content"`
+		ImageUrl   []string   `json:"image_url"`
+		ExpiresAt  *time.Time `json:"expires_at,omitempty"`
 	}
 
 	var params postParams
@@ -38,19 +38,21 @@ func (apiCfg *apiConfig) handlerCreatePost(w http.ResponseWriter, r *http.Reques
 	if len(params.ImageUrl) == 0 {
 		params.ImageUrl = []string{"https://cdn3.iconfinder.com/data/icons/news-65/64/paper_plane-send-message-mail-communication-publish-origami-512.png"}
 	}
-	if params.Title == "" || params.Category == "" || params.Content == "" {
+	if params.Title == "" || params.CategoryID == 0 || params.Content == "" {
+		log.Printf("Invalid post params: %+v", params)
 		http.Error(w, "missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	post, err := apiCfg.DB.CreatePost(r.Context(), db.CreatePostParams{
-		UserID:    userID,
-		Category:  params.Category,
-		Title:     params.Title,
-		Content:   params.Content,
-		ImageUrl:  params.ImageUrl,
-		ExpiresAt: expires,
+		UserID:     userID,
+		CategoryID: int32(params.CategoryID),
+		Title:      params.Title,
+		Content:    params.Content,
+		ImageUrl:   params.ImageUrl,
+		ExpiresAt:  expires,
 	})
+
 	if err != nil {
 		log.Printf("CreatePost error: %v", err)
 		http.Error(w, "failed to create post", http.StatusInternalServerError)

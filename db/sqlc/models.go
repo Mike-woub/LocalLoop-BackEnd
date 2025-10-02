@@ -31,14 +31,14 @@ type Neighborhood struct {
 }
 
 type Post struct {
-	ID        int32        `json:"id"`
-	UserID    int32        `json:"user_id"`
-	Category  string       `json:"category"`
-	Title     string       `json:"title"`
-	Content   string       `json:"content"`
-	ImageUrl  []string     `json:"image_url"`
-	CreatedAt time.Time    `json:"created_at"`
-	ExpiresAt sql.NullTime `json:"expires_at"`
+	ID         int32        `json:"id"`
+	UserID     int32        `json:"user_id"`
+	CategoryID int32        `json:"category_id"`
+	Title      string       `json:"title"`
+	Content    string       `json:"content"`
+	ImageUrl   []string     `json:"image_url"`
+	CreatedAt  time.Time    `json:"created_at"`
+	ExpiresAt  sql.NullTime `json:"expires_at"`
 }
 
 type User struct {
