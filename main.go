@@ -57,6 +57,7 @@ func main() {
 	})
 	r.Post("/signup", apiCfg.handlerSignup)
 	r.Post("/login", apiCfg.handlerGetUser)
+	r.Get("/categories", apiCfg.handlerGetCategories)
 	r.With(jwtMiddleware).Post("/posts", apiCfg.handlerCreatePost)
 
 	fmt.Println("starting server on port", port)

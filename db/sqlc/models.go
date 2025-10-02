@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type Category struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
 type Comment struct {
 	ID        int32     `json:"id"`
 	PostID    int32     `json:"post_id"`

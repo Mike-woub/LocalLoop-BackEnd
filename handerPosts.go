@@ -33,7 +33,14 @@ func (apiCfg *apiConfig) handlerCreatePost(w http.ResponseWriter, r *http.Reques
 	if params.ExpiresAt != nil {
 		expires = sql.NullTime{Time: *params.ExpiresAt, Valid: true}
 	} else {
-		expires = sql.NullTime{Valid: false}
+		expires = sql.NullTime{Time: time.Now().AddDate(0, 0, 14), Valid: true}
+	}
+	if len(params.ImageUrl) == 0 {
+		params.ImageUrl = []string{"https://cdn3.iconfinder.com/data/icons/news-65/64/paper_plane-send-message-mail-communication-publish-origami-512.png"}
+	}
+	if params.Title == "" || params.Category == "" || params.Content == "" {
+		http.Error(w, "missing required fields", http.StatusBadRequest)
+		return
 	}
 
 	post, err := apiCfg.DB.CreatePost(r.Context(), db.CreatePostParams{
