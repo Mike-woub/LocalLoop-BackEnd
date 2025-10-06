@@ -51,3 +51,104 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 	)
 	return i, err
 }
+
+const getCertainPost = `-- name: GetCertainPost :one
+SELECT 
+  posts.id,
+  posts.user_id,
+  users.username,
+  posts.title,
+  posts.content,
+  posts.image_url,
+  posts.category_id,
+  categories.name AS category_name
+FROM posts
+JOIN categories ON posts.category_id = categories.id
+JOIN users ON posts.user_id = users.id
+WHERE posts.id=$1
+`
+
+type GetCertainPostRow struct {
+	ID           int32    `json:"id"`
+	UserID       int32    `json:"user_id"`
+	Username     string   `json:"username"`
+	Title        string   `json:"title"`
+	Content      string   `json:"content"`
+	ImageUrl     []string `json:"image_url"`
+	CategoryID   int32    `json:"category_id"`
+	CategoryName string   `json:"category_name"`
+}
+
+func (q *Queries) GetCertainPost(ctx context.Context, id int32) (GetCertainPostRow, error) {
+	row := q.db.QueryRowContext(ctx, getCertainPost, id)
+	var i GetCertainPostRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Username,
+		&i.Title,
+		&i.Content,
+		pq.Array(&i.ImageUrl),
+		&i.CategoryID,
+		&i.CategoryName,
+	)
+	return i, err
+}
+
+const getPosts = `-- name: GetPosts :many
+SELECT 
+  posts.id,
+  posts.user_id,
+  users.username,
+  posts.title,
+  posts.content,
+  posts.image_url,
+  posts.category_id,
+  categories.name AS category_name
+FROM posts
+JOIN categories ON posts.category_id = categories.id
+JOIN users ON posts.user_id = users.id
+`
+
+type GetPostsRow struct {
+	ID           int32    `json:"id"`
+	UserID       int32    `json:"user_id"`
+	Username     string   `json:"username"`
+	Title        string   `json:"title"`
+	Content      string   `json:"content"`
+	ImageUrl     []string `json:"image_url"`
+	CategoryID   int32    `json:"category_id"`
+	CategoryName string   `json:"category_name"`
+}
+
+func (q *Queries) GetPosts(ctx context.Context) ([]GetPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPosts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPostsRow
+	for rows.Next() {
+		var i GetPostsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Username,
+			&i.Title,
+			&i.Content,
+			pq.Array(&i.ImageUrl),
+			&i.CategoryID,
+			&i.CategoryName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

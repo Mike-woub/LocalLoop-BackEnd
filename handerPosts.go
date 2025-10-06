@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/go-chi/chi"
 	db "github.com/mike-woub/User_Auth/db/sqlc"
 )
 
@@ -61,4 +63,33 @@ func (apiCfg *apiConfig) handlerCreatePost(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader((http.StatusCreated))
 	json.NewEncoder(w).Encode(post)
 
+}
+
+func (apiCfg *apiConfig) handlerGetPosts(w http.ResponseWriter, r *http.Request) {
+	posts, err := apiCfg.DB.GetPosts(r.Context())
+	if err != nil {
+		log.Printf("error fetching posts %v", err)
+		http.Error(w, "cant fetch posts", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(posts)
+}
+func (apiCfg *apiConfig) handlerGetCertainPost(w http.ResponseWriter, r *http.Request) {
+	postIDStr := chi.URLParam(r, "post_id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+	post, err := apiCfg.DB.GetCertainPost(r.Context(), int32(postID))
+	if err != nil {
+		log.Printf("error fetching post %v", err)
+		http.Error(w, "couldnt fetch post", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(post)
 }
