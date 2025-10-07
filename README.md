@@ -22,5 +22,4 @@ LocalLoop is a full-stack social media platform built with Go and React. This ba
 - **Framework**: Chi Router
 - **Database**: PostgreSQL
 - **ORM**: [SQLC](https://sqlc.dev/)
-- **Security**: JWT, Fortinet SIEM (for enterprise integration)
-- **Testing**: Go test, Postman, Selenium (UI validation)
+- **Migrations**:Goose
