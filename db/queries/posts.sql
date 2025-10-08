@@ -33,3 +33,8 @@ FROM posts
 JOIN categories ON posts.category_id = categories.id
 JOIN users ON posts.user_id = users.id
 WHERE posts.id=$1;
+
+-- name: DeletePost :one
+ DELETE FROM posts 
+ WHERE id=$1 AND user_id=$2
+ RETURNING id;

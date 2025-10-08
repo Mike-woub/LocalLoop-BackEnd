@@ -44,7 +44,7 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5175"}, // your frontend origin
+		AllowedOrigins:   []string{"http://localhost:5175", "http://localhost:5173"}, // your frontend origin
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -63,6 +63,10 @@ func main() {
 	r.Get("/comments", apiCfg.handlerGetComments)
 	r.Get("/posts", apiCfg.handlerGetPosts)
 	r.Get("/posts/{post_id}", apiCfg.handlerGetCertainPost)
+	r.With(jwtMiddleware).Post("/posts/{post_id}/like", apiCfg.handlerLikePost)
+	r.With(jwtMiddleware).Delete("/posts/{post_id}/like", apiCfg.handlerUnlikePost)
+	r.With(jwtMiddleware).Get("/posts/{post_id}/likes", apiCfg.handlerGetLikeStatus)
+	r.With(jwtMiddleware).Delete("/posts/{post_id}", apiCfg.handlerDeletePosts)
 
 	fmt.Println("starting server on port", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))

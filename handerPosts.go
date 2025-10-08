@@ -93,3 +93,33 @@ func (apiCfg *apiConfig) handlerGetCertainPost(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(post)
 }
+
+func (apiCfg *apiConfig) handlerDeletePosts(w http.ResponseWriter, r *http.Request) {
+	postIDStr := chi.URLParam(r, "post_id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Missing or invalid post_id", http.StatusBadRequest)
+		return
+	}
+
+	// Extract user ID from context (set by JWT middleware)
+	userIDRaw := r.Context().Value(userIDKey) // use your typed context key
+	userID, ok := userIDRaw.(int32)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Call SQLC delete method
+	_, err = apiCfg.DB.DeletePost(r.Context(), db.DeletePostParams{
+		UserID: userID,
+		ID:     int32(postID), // lowercase 'postID', not 'PostID'
+	})
+	if err != nil {
+		http.Error(w, "Could not delete post", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Post deleted successfully"))
+}

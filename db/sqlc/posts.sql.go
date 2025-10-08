@@ -17,7 +17,7 @@ INSERT INTO posts (
   user_id, category_id, title, content, image_url, expires_at
 ) VALUES (
   $1, $2, $3, $4, $5, $6
-) RETURNING id, user_id, category_id, title, content, image_url, created_at, expires_at
+) RETURNING id, user_id, category_id, title, content, image_url, created_at, expires_at, like_count
 `
 
 type CreatePostParams struct {
@@ -48,8 +48,27 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 		pq.Array(&i.ImageUrl),
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.LikeCount,
 	)
 	return i, err
+}
+
+const deletePost = `-- name: DeletePost :one
+ DELETE FROM posts 
+ WHERE id=$1 AND user_id=$2
+ RETURNING id
+`
+
+type DeletePostParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, deletePost, arg.ID, arg.UserID)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getCertainPost = `-- name: GetCertainPost :one

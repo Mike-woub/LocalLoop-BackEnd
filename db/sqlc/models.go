@@ -22,6 +22,13 @@ type Comment struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type Like struct {
+	ID        int32         `json:"id"`
+	UserID    sql.NullInt32 `json:"user_id"`
+	PostID    sql.NullInt32 `json:"post_id"`
+	CreatedAt sql.NullTime  `json:"created_at"`
+}
+
 type Neighborhood struct {
 	ID       int32          `json:"id"`
 	Name     string         `json:"name"`
@@ -31,14 +38,15 @@ type Neighborhood struct {
 }
 
 type Post struct {
-	ID         int32        `json:"id"`
-	UserID     int32        `json:"user_id"`
-	CategoryID int32        `json:"category_id"`
-	Title      string       `json:"title"`
-	Content    string       `json:"content"`
-	ImageUrl   []string     `json:"image_url"`
-	CreatedAt  time.Time    `json:"created_at"`
-	ExpiresAt  sql.NullTime `json:"expires_at"`
+	ID         int32         `json:"id"`
+	UserID     int32         `json:"user_id"`
+	CategoryID int32         `json:"category_id"`
+	Title      string        `json:"title"`
+	Content    string        `json:"content"`
+	ImageUrl   []string      `json:"image_url"`
+	CreatedAt  time.Time     `json:"created_at"`
+	ExpiresAt  sql.NullTime  `json:"expires_at"`
+	LikeCount  sql.NullInt32 `json:"like_count"`
 }
 
 type User struct {
