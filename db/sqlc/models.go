@@ -38,15 +38,18 @@ type Neighborhood struct {
 }
 
 type Post struct {
-	ID         int32         `json:"id"`
-	UserID     int32         `json:"user_id"`
-	CategoryID int32         `json:"category_id"`
-	Title      string        `json:"title"`
-	Content    string        `json:"content"`
-	ImageUrl   []string      `json:"image_url"`
-	CreatedAt  time.Time     `json:"created_at"`
-	ExpiresAt  sql.NullTime  `json:"expires_at"`
-	LikeCount  sql.NullInt32 `json:"like_count"`
+	ID           int32           `json:"id"`
+	UserID       int32           `json:"user_id"`
+	CategoryID   int32           `json:"category_id"`
+	Title        string          `json:"title"`
+	Content      string          `json:"content"`
+	ImageUrl     []string        `json:"image_url"`
+	CreatedAt    time.Time       `json:"created_at"`
+	ExpiresAt    sql.NullTime    `json:"expires_at"`
+	LikeCount    sql.NullInt32   `json:"like_count"`
+	Latitude     sql.NullFloat64 `json:"latitude"`
+	Longitude    sql.NullFloat64 `json:"longitude"`
+	LocationName sql.NullString  `json:"location_name"`
 }
 
 type User struct {

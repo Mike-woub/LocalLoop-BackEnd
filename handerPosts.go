@@ -18,41 +18,66 @@ func (apiCfg *apiConfig) handlerCreatePost(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+
 	type postParams struct {
-		CategoryID int        `json:"category_id"`
-		Title      string     `json:"title"`
-		Content    string     `json:"content"`
-		ImageUrl   []string   `json:"image_url"`
-		ExpiresAt  *time.Time `json:"expires_at,omitempty"`
+		CategoryID   int        `json:"category_id"`
+		Title        string     `json:"title"`
+		Content      string     `json:"content"`
+		ImageUrl     []string   `json:"image_url"`
+		ExpiresAt    *time.Time `json:"expires_at,omitempty"`
+		Latitude     *float64   `json:"latitude,omitempty"`
+		Longitude    *float64   `json:"longitude,omitempty"`
+		LocationName string     `json:"location_name,omitempty"`
 	}
 
 	var params postParams
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "invalid Json", http.StatusBadRequest)
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
 		return
 	}
+
 	var expires sql.NullTime
 	if params.ExpiresAt != nil {
 		expires = sql.NullTime{Time: *params.ExpiresAt, Valid: true}
 	} else {
 		expires = sql.NullTime{Time: time.Now().AddDate(0, 0, 14), Valid: true}
 	}
+
 	if len(params.ImageUrl) == 0 {
-		params.ImageUrl = []string{"https://cdn3.iconfinder.com/data/icons/news-65/64/paper_plane-send-message-mail-communication-publish-origami-512.png"}
+		params.ImageUrl = []string{
+			"https://cdn3.iconfinder.com/data/icons/news-65/64/paper_plane-send-message-mail-communication-publish-origami-512.png",
+		}
 	}
+
 	if params.Title == "" || params.CategoryID == 0 || params.Content == "" {
 		log.Printf("Invalid post params: %+v", params)
 		http.Error(w, "missing required fields", http.StatusBadRequest)
 		return
 	}
 
+	// Default location fallback
+	latitude := 9.03
+	longitude := 38.74
+	if params.Latitude != nil {
+		latitude = *params.Latitude
+	}
+	if params.Longitude != nil {
+		longitude = *params.Longitude
+	}
+	if params.LocationName == "" {
+		params.LocationName = "Addis Ababa, Ethiopia"
+	}
+
 	post, err := apiCfg.DB.CreatePost(r.Context(), db.CreatePostParams{
-		UserID:     userID,
-		CategoryID: int32(params.CategoryID),
-		Title:      params.Title,
-		Content:    params.Content,
-		ImageUrl:   params.ImageUrl,
-		ExpiresAt:  expires,
+		UserID:       userID,
+		CategoryID:   int32(params.CategoryID),
+		Title:        params.Title,
+		Content:      params.Content,
+		ImageUrl:     params.ImageUrl,
+		ExpiresAt:    expires,
+		Latitude:     sql.NullFloat64{Float64: latitude, Valid: true},
+		Longitude:    sql.NullFloat64{Float64: longitude, Valid: true},
+		LocationName: sql.NullString{String: params.LocationName, Valid: true},
 	})
 
 	if err != nil {
@@ -60,9 +85,9 @@ func (apiCfg *apiConfig) handlerCreatePost(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "failed to create post", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader((http.StatusCreated))
-	json.NewEncoder(w).Encode(post)
 
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(post)
 }
 
 func (apiCfg *apiConfig) handlerGetPosts(w http.ResponseWriter, r *http.Request) {

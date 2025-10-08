@@ -14,19 +14,31 @@ import (
 
 const createPost = `-- name: CreatePost :one
 INSERT INTO posts (
-  user_id, category_id, title, content, image_url, expires_at
+  user_id,
+  category_id,
+  title,
+  content,
+  image_url,
+  expires_at,
+  latitude,
+  longitude,
+  location_name
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
-) RETURNING id, user_id, category_id, title, content, image_url, created_at, expires_at, like_count
+  $1, $2, $3, $4, $5, $6, $7, $8, $9
+)
+RETURNING id, user_id, category_id, title, content, image_url, created_at, expires_at, like_count, latitude, longitude, location_name
 `
 
 type CreatePostParams struct {
-	UserID     int32        `json:"user_id"`
-	CategoryID int32        `json:"category_id"`
-	Title      string       `json:"title"`
-	Content    string       `json:"content"`
-	ImageUrl   []string     `json:"image_url"`
-	ExpiresAt  sql.NullTime `json:"expires_at"`
+	UserID       int32           `json:"user_id"`
+	CategoryID   int32           `json:"category_id"`
+	Title        string          `json:"title"`
+	Content      string          `json:"content"`
+	ImageUrl     []string        `json:"image_url"`
+	ExpiresAt    sql.NullTime    `json:"expires_at"`
+	Latitude     sql.NullFloat64 `json:"latitude"`
+	Longitude    sql.NullFloat64 `json:"longitude"`
+	LocationName sql.NullString  `json:"location_name"`
 }
 
 func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, error) {
@@ -37,6 +49,9 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 		arg.Content,
 		pq.Array(arg.ImageUrl),
 		arg.ExpiresAt,
+		arg.Latitude,
+		arg.Longitude,
+		arg.LocationName,
 	)
 	var i Post
 	err := row.Scan(
@@ -49,14 +64,17 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 		&i.CreatedAt,
 		&i.ExpiresAt,
 		&i.LikeCount,
+		&i.Latitude,
+		&i.Longitude,
+		&i.LocationName,
 	)
 	return i, err
 }
 
 const deletePost = `-- name: DeletePost :one
- DELETE FROM posts 
- WHERE id=$1 AND user_id=$2
- RETURNING id
+DELETE FROM posts 
+WHERE id = $1 AND user_id = $2
+RETURNING id
 `
 
 type DeletePostParams struct {
@@ -80,22 +98,28 @@ SELECT
   posts.content,
   posts.image_url,
   posts.category_id,
-  categories.name AS category_name
+  categories.name AS category_name,
+  posts.latitude,
+  posts.longitude,
+  posts.location_name
 FROM posts
 JOIN categories ON posts.category_id = categories.id
 JOIN users ON posts.user_id = users.id
-WHERE posts.id=$1
+WHERE posts.id = $1
 `
 
 type GetCertainPostRow struct {
-	ID           int32    `json:"id"`
-	UserID       int32    `json:"user_id"`
-	Username     string   `json:"username"`
-	Title        string   `json:"title"`
-	Content      string   `json:"content"`
-	ImageUrl     []string `json:"image_url"`
-	CategoryID   int32    `json:"category_id"`
-	CategoryName string   `json:"category_name"`
+	ID           int32           `json:"id"`
+	UserID       int32           `json:"user_id"`
+	Username     string          `json:"username"`
+	Title        string          `json:"title"`
+	Content      string          `json:"content"`
+	ImageUrl     []string        `json:"image_url"`
+	CategoryID   int32           `json:"category_id"`
+	CategoryName string          `json:"category_name"`
+	Latitude     sql.NullFloat64 `json:"latitude"`
+	Longitude    sql.NullFloat64 `json:"longitude"`
+	LocationName sql.NullString  `json:"location_name"`
 }
 
 func (q *Queries) GetCertainPost(ctx context.Context, id int32) (GetCertainPostRow, error) {
@@ -110,6 +134,9 @@ func (q *Queries) GetCertainPost(ctx context.Context, id int32) (GetCertainPostR
 		pq.Array(&i.ImageUrl),
 		&i.CategoryID,
 		&i.CategoryName,
+		&i.Latitude,
+		&i.Longitude,
+		&i.LocationName,
 	)
 	return i, err
 }
@@ -123,21 +150,27 @@ SELECT
   posts.content,
   posts.image_url,
   posts.category_id,
-  categories.name AS category_name
+  categories.name AS category_name,
+  posts.latitude,
+  posts.longitude,
+  posts.location_name
 FROM posts
 JOIN categories ON posts.category_id = categories.id
 JOIN users ON posts.user_id = users.id
 `
 
 type GetPostsRow struct {
-	ID           int32    `json:"id"`
-	UserID       int32    `json:"user_id"`
-	Username     string   `json:"username"`
-	Title        string   `json:"title"`
-	Content      string   `json:"content"`
-	ImageUrl     []string `json:"image_url"`
-	CategoryID   int32    `json:"category_id"`
-	CategoryName string   `json:"category_name"`
+	ID           int32           `json:"id"`
+	UserID       int32           `json:"user_id"`
+	Username     string          `json:"username"`
+	Title        string          `json:"title"`
+	Content      string          `json:"content"`
+	ImageUrl     []string        `json:"image_url"`
+	CategoryID   int32           `json:"category_id"`
+	CategoryName string          `json:"category_name"`
+	Latitude     sql.NullFloat64 `json:"latitude"`
+	Longitude    sql.NullFloat64 `json:"longitude"`
+	LocationName sql.NullString  `json:"location_name"`
 }
 
 func (q *Queries) GetPosts(ctx context.Context) ([]GetPostsRow, error) {
@@ -158,6 +191,9 @@ func (q *Queries) GetPosts(ctx context.Context) ([]GetPostsRow, error) {
 			pq.Array(&i.ImageUrl),
 			&i.CategoryID,
 			&i.CategoryName,
+			&i.Latitude,
+			&i.Longitude,
+			&i.LocationName,
 		); err != nil {
 			return nil, err
 		}
