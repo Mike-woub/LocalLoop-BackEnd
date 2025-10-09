@@ -10,6 +10,38 @@ import (
 	"database/sql"
 )
 
+const checkEmailExists = `-- name: CheckEmailExists :one
+SELECT COUNT(*) FROM users WHERE email = $1 AND id != $2
+`
+
+type CheckEmailExistsParams struct {
+	Email string `json:"email"`
+	ID    int32  `json:"id"`
+}
+
+func (q *Queries) CheckEmailExists(ctx context.Context, arg CheckEmailExistsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkEmailExists, arg.Email, arg.ID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const checkUsernameExists = `-- name: CheckUsernameExists :one
+SELECT COUNT(*) FROM users WHERE username = $1 AND id != $2
+`
+
+type CheckUsernameExistsParams struct {
+	Username string `json:"username"`
+	ID       int32  `json:"id"`
+}
+
+func (q *Queries) CheckUsernameExists(ctx context.Context, arg CheckUsernameExistsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkUsernameExists, arg.Username, arg.ID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (username, email, password)
 VALUES($1,$2,$3)
@@ -42,17 +74,18 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password, created_at
+SELECT id, username, email, password, created_at, avatar_url
 FROM users
 WHERE email = $1
 `
 
 type GetUserByEmailRow struct {
-	ID        int32        `json:"id"`
-	Username  string       `json:"username"`
-	Email     string       `json:"email"`
-	Password  string       `json:"password"`
-	CreatedAt sql.NullTime `json:"created_at"`
+	ID        int32          `json:"id"`
+	Username  string         `json:"username"`
+	Email     string         `json:"email"`
+	Password  string         `json:"password"`
+	CreatedAt sql.NullTime   `json:"created_at"`
+	AvatarUrl sql.NullString `json:"avatar_url"`
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
@@ -64,6 +97,114 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.Email,
 		&i.Password,
 		&i.CreatedAt,
+		&i.AvatarUrl,
 	)
 	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, username, email, password, avatar_url
+FROM users
+WHERE id = $1
+`
+
+type GetUserByIDRow struct {
+	ID        int32          `json:"id"`
+	Username  string         `json:"username"`
+	Email     string         `json:"email"`
+	Password  string         `json:"password"`
+	AvatarUrl sql.NullString `json:"avatar_url"`
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id int32) (GetUserByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i GetUserByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.AvatarUrl,
+	)
+	return i, err
+}
+
+const updateAvatar = `-- name: UpdateAvatar :exec
+UPDATE users
+SET avatar_url = $1
+WHERE id = $2
+`
+
+type UpdateAvatarParams struct {
+	AvatarUrl sql.NullString `json:"avatar_url"`
+	ID        int32          `json:"id"`
+}
+
+func (q *Queries) UpdateAvatar(ctx context.Context, arg UpdateAvatarParams) error {
+	_, err := q.db.ExecContext(ctx, updateAvatar, arg.AvatarUrl, arg.ID)
+	return err
+}
+
+const updateEmail = `-- name: UpdateEmail :exec
+UPDATE users
+SET email = $1
+WHERE id = $2
+`
+
+type UpdateEmailParams struct {
+	Email string `json:"email"`
+	ID    int32  `json:"id"`
+}
+
+func (q *Queries) UpdateEmail(ctx context.Context, arg UpdateEmailParams) error {
+	_, err := q.db.ExecContext(ctx, updateEmail, arg.Email, arg.ID)
+	return err
+}
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE users
+SET password = $1
+WHERE id = $2
+`
+
+type UpdatePasswordParams struct {
+	Password string `json:"password"`
+	ID       int32  `json:"id"`
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updatePassword, arg.Password, arg.ID)
+	return err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users
+SET password = $2
+WHERE email = $1
+`
+
+type UpdateUserPasswordParams struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserPassword, arg.Email, arg.Password)
+	return err
+}
+
+const updateUsername = `-- name: UpdateUsername :exec
+UPDATE users
+SET username = $1
+WHERE id = $2
+`
+
+type UpdateUsernameParams struct {
+	Username string `json:"username"`
+	ID       int32  `json:"id"`
+}
+
+func (q *Queries) UpdateUsername(ctx context.Context, arg UpdateUsernameParams) error {
+	_, err := q.db.ExecContext(ctx, updateUsername, arg.Username, arg.ID)
+	return err
 }

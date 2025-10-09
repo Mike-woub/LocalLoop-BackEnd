@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -13,10 +14,12 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	db "github.com/mike-woub/User_Auth/db/sqlc"
+	"github.com/patrickmn/go-cache"
 )
 
 type apiConfig struct {
-	DB *db.Queries
+	DB       *db.Queries
+	OTPStore *cache.Cache
 }
 
 func main() {
@@ -38,7 +41,8 @@ func main() {
 	}
 	queries := db.New(conn)
 	apiCfg := apiConfig{
-		DB: queries,
+		DB:       queries,
+		OTPStore: cache.New(5*time.Minute, 10*time.Minute), // default expiration and cleanup interval
 	}
 
 	r := chi.NewRouter()
@@ -55,7 +59,10 @@ func main() {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Server is running on port" + port))
 	})
-	r.Post("/signup", apiCfg.handlerSignup)
+	r.Post("/request-signup-otp", apiCfg.handlerSignup)
+	r.Post("/verify-signup", apiCfg.handlerVerifySignup)
+	r.Post("/verify-password-reset", apiCfg.handlerVerifyPasswordReset)
+	r.Post("/request-password-reset", apiCfg.handlerRequestPasswordReset)
 	r.Post("/login", apiCfg.handlerGetUser)
 	r.Get("/categories", apiCfg.handlerGetCategories)
 	r.With(jwtMiddleware).Post("/posts", apiCfg.handlerCreatePost)
@@ -67,6 +74,10 @@ func main() {
 	r.With(jwtMiddleware).Delete("/posts/{post_id}/like", apiCfg.handlerUnlikePost)
 	r.With(jwtMiddleware).Get("/posts/{post_id}/likes", apiCfg.handlerGetLikeStatus)
 	r.With(jwtMiddleware).Delete("/posts/{post_id}", apiCfg.handlerDeletePosts)
+	r.With(jwtMiddleware).Put("/users/username", apiCfg.handlerUpdateUsername)
+	r.With(jwtMiddleware).Put("/users/email", apiCfg.handlerUpdateEmail)
+	r.With(jwtMiddleware).Put("/users/password", apiCfg.handlerUpdatePassword)
+	r.With(jwtMiddleware).Put("/users/avatar", apiCfg.handlerUpdateAvatar)
 
 	fmt.Println("starting server on port", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
