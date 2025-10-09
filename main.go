@@ -48,11 +48,16 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5175", "http://localhost:5173"}, // your frontend origin
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedOrigins: []string{
+			"http://localhost:5173",        // local dev
+			"http://localhost:5175",        // alternate dev port
+			"https://localloop.vercel.app", // your Vercel frontend
+		},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
+
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
